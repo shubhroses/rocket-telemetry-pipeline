@@ -1,0 +1,12 @@
+{
+  "api_key": "YOUR_AIRBYTE_API_KEY_HERE",
+  "workspace_id": "YOUR_WORKSPACE_ID_HERE",
+  "connection_id": "YOUR_CONNECTION_ID_HERE",
+  "base_url": "https://api.airbyte.com/v1",
+  "notes": {
+    "setup_date": "2025-06-30",
+    "description": "Airbyte Cloud API configuration for telemetry pipeline",
+    "how_to_get_workspace_id": "Found in Airbyte Cloud URL: cloud.airbyte.com/workspaces/{workspace_id}",
+    "how_to_get_connection_id": "Found in connection URL after creating source->destination connection"
+  }
+} 

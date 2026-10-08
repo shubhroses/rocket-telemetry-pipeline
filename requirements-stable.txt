@@ -1,0 +1,17 @@
+# Stable dbt and dependencies for clean demo
+dbt-core==1.8.7
+dbt-redshift==1.8.1
+dbt-postgres==1.8.2
+
+# Compatible protobuf version
+protobuf==4.21.12
+
+# Supporting packages with compatible versions
+grpcio==1.57.0
+pandas==2.0.3
+streamlit==1.28.1
+plotly==5.17.0
+psycopg2-binary==2.9.7
+
+# Utility packages
+python-dotenv==1.0.0 

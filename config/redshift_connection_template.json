@@ -1,0 +1,18 @@
+{
+  "host": "[workgroup-name].[account-id].[region].redshift-serverless.amazonaws.com",
+  "port": 5439,
+  "database": "dev",
+  "username": "YOUR_USERNAME_HERE",
+  "password": "YOUR_PASSWORD_HERE",
+  "schemas": {
+    "raw": "telemetry_raw", 
+    "clean": "telemetry_clean"
+  },
+  "ssl_mode": "require",
+  "notes": {
+    "setup_date": "YYYY-MM-DD",
+    "workgroup": "[workgroup-name]",
+    "namespace": "telemetry-namespace",
+    "region": "us-west-2"
+  }
+} 

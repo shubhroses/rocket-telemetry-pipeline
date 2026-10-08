@@ -1,0 +1,56 @@
+# Sensitive connection details
+config/redshift_connection.json
+config/*_connection.json
+config/.env
+*.env
+
+# Logs and temporary files
+*.log
+logs/
+dbt/logs/
+dbt/*/logs/
+errors.log
+*.tmp
+*~
+*.bak
+
+# Data files (comment out if you want to commit sample data)
+# data/*.csv
+data/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# dbt
+dbt/logs/
+dbt/target/
+dbt/dbt_packages/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Airbyte local state and sensitive configs
+airbyte/state/
+airbyte/logs/
+airbyte/*_config_actual.json
+airbyte/workspaces/
+airbyte/.env* 
