@@ -115,7 +115,7 @@ dbt run --profiles-dir ..
 dbt test --profiles-dir ..
 ```
 
-The pinned versions were released between December 2022 and September 2024. The pinned pandas, grpcio and psycopg2-binary releases have no wheels for Python 3.12 or later, so use Python 3.11 or earlier. The install was checked on Python 3.10. `packages.yml` asks for `dbt_utils` 1.3.0, which two of the tests use.
+The pinned versions were released between December 2022 and September 2024. The pinned pandas, grpcio and psycopg2-binary releases have no wheels for Python 3.12 or later, so use Python 3.11 or earlier. The install was checked on Python 3.10. `dbt deps` installs `dbt_utils` 1.3.0, which two of the tests use.
 
 dbt needs a profile named `telemetry_analytics` (the `profile` set in `dbt_project.yml`). `dbt/profiles.yml.example` is that profile with the host, user and password read from the environment variables `REDSHIFT_HOST`, `REDSHIFT_USER` and `REDSHIFT_PASSWORD`, so the copy holds no connection details. `dbt/profiles.yml` is git-ignored. dbt does not look in `dbt/` by default, hence `--profiles-dir ..`; copying the example to `~/.dbt/profiles.yml` works without the flag.
 
@@ -142,7 +142,6 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 ## Limitations
 
 - The Airbyte connection and the rows of the two dimension tables live outside the repository. The warehouse steps cannot be reproduced from a fresh clone without recreating them: the repository has the dimension DDL but no statements that populate the tables.
-- `dbt deps` fails with the pinned dbt-core 1.8.7: the committed `package-lock.yml` has a `name` key that this version rejects as malformed.
 - `fact_telemetry_readings` refers to the dimension tables by hard-coded name rather than through `source()` or `ref()`, so they do not appear in dbt lineage.
 - `sql/star_schema_design.sql` also defines a fact table and a bridge table in `telemetry_clean`. The dbt project builds its own fact table in `telemetry_clean_core` and uses only the two dimension tables from that file.
 - `engine_performance_summary` does not read `dim_engines`. It derives `engine_name` from the five engine ids with a `CASE` expression and fills `engine_type`, `manufacturer` ("Example Aerospace", a made-up name), `operational_status` and `installation_date` with constants.
