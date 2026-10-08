@@ -32,6 +32,10 @@ venv/
 dbt/logs/
 dbt/target/
 dbt/dbt_packages/
+# Real profiles hold connection details. dbt/profiles.yml.example is the tracked template.
+profiles.yml
+# Per-user id file that dbt writes next to the profile
+.user.yml
 
 # OS
 .DS_Store

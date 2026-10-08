@@ -31,6 +31,7 @@ python/streamlit_dashboard.py    reads the fact table and both marts
 | `python/ingest_and_clean.py` | Validation, correction and de-duplication (standard library only) |
 | `python/streamlit_dashboard.py` | Dashboard over the dbt outputs |
 | `dbt/telemetry_analytics/` | dbt project: staging, core and marts models, schema tests |
+| `dbt/profiles.yml.example` | dbt profile template that reads host, user and password from environment variables |
 | `sql/star_schema_design.sql` | Redshift DDL for the fact, dimension and bridge tables |
 | `config/redshift_connection_template.json` | Template for the dashboard's connection file |
 | `config/airbyte_config.json` | Placeholder Airbyte API settings; no script reads it |
@@ -102,33 +103,23 @@ The remaining steps expect:
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-stable.txt
+
+cp dbt/profiles.yml.example dbt/profiles.yml
+export REDSHIFT_HOST=<workgroup>.<account-id>.<region>.redshift-serverless.amazonaws.com
+export REDSHIFT_USER=<user>
+export REDSHIFT_PASSWORD=<password>
+
 cd dbt/telemetry_analytics
 dbt deps
-dbt run
-dbt test
+dbt run --profiles-dir ..
+dbt test --profiles-dir ..
 ```
 
 The pinned versions were released between December 2022 and September 2024. The pinned pandas, grpcio and psycopg2-binary releases have no wheels for Python 3.12 or later, so use Python 3.11 or earlier. The install was checked on Python 3.10. `packages.yml` asks for `dbt_utils` 1.3.0, which two of the tests use.
 
-dbt needs a profile named `telemetry_analytics` (the `profile` set in `dbt_project.yml`). Put it in `~/.dbt/profiles.yml`, or keep it elsewhere and pass `--profiles-dir`. Read the password from the environment rather than writing it into the file:
+dbt needs a profile named `telemetry_analytics` (the `profile` set in `dbt_project.yml`). `dbt/profiles.yml.example` is that profile with the host, user and password read from the environment variables `REDSHIFT_HOST`, `REDSHIFT_USER` and `REDSHIFT_PASSWORD`, so the copy holds no connection details. `dbt/profiles.yml` is git-ignored. dbt does not look in `dbt/` by default, hence `--profiles-dir ..`; copying the example to `~/.dbt/profiles.yml` works without the flag.
 
-```yaml
-telemetry_analytics:
-  target: dev
-  outputs:
-    dev:
-      type: redshift
-      host: <workgroup>.<account-id>.<region>.redshift-serverless.amazonaws.com
-      port: 5439
-      user: <user>
-      password: "{{ env_var('REDSHIFT_PASSWORD') }}"
-      dbname: dev
-      schema: telemetry_clean
-      threads: 4
-      sslmode: require
-```
-
-Keep `schema: telemetry_clean`. With dbt's default schema naming the models are then built in `telemetry_clean_staging`, `telemetry_clean_core` and `telemetry_clean_marts`, which are the names the dashboard queries.
+The example sets `schema: telemetry_clean`, and that value should stay. With dbt's default schema naming the models are then built in `telemetry_clean_staging`, `telemetry_clean_core` and `telemetry_clean_marts`, which are the names the dashboard queries.
 
 ### 4. Start the dashboard
 

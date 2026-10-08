@@ -1,0 +1,30 @@
+# Example dbt profile for the telemetry_analytics project.
+#
+# Copy this file to dbt/profiles.yml, which is git-ignored, and set these
+# environment variables before running dbt:
+#
+#   REDSHIFT_HOST      endpoint of the Redshift Serverless workgroup, for example
+#                      <workgroup>.<account-id>.<region>.redshift-serverless.amazonaws.com
+#   REDSHIFT_USER      database user
+#   REDSHIFT_PASSWORD  that user's password
+#
+# Then run dbt from dbt/telemetry_analytics with "--profiles-dir ..".
+# The file holds no connection details itself, so it is safe to commit.
+
+telemetry_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: redshift
+      host: "{{ env_var('REDSHIFT_HOST') }}"
+      port: 5439
+      user: "{{ env_var('REDSHIFT_USER') }}"
+      password: "{{ env_var('REDSHIFT_PASSWORD') }}"
+      # sources.yml reads from the database named dev.
+      dbname: dev
+      # Keep this value. dbt appends the custom schema of each model to it, which
+      # gives telemetry_clean_staging, telemetry_clean_core and telemetry_clean_marts,
+      # the names the dashboard queries.
+      schema: telemetry_clean
+      threads: 4
+      sslmode: require
