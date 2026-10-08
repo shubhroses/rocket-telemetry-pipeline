@@ -39,6 +39,7 @@ python/streamlit_dashboard.py    reads the fact table and both marts
 | `requirements-stable.txt` | Pinned dbt, Streamlit, pandas, Plotly and psycopg2 versions |
 | `tests/test_pipeline.py` | pytest suite for the generator and the cleaner |
 | `requirements-dev.txt`, `pytest.ini` | Test dependency (pytest) and test configuration |
+| `.github/workflows/ci.yml` | GitHub Actions workflow: pytest, then `dbt deps` and `dbt parse` |
 
 ## What each stage does
 
@@ -149,7 +150,9 @@ Any virtualenv with Python 3.10 or later will do; the suite was run on Python 3.
 - each cleaning rule holds for a set of handwritten records, the default output path is used when none is given, and a missing input file gives exit status 1;
 - `data/telemetry_clean.csv` is what the cleaner produces from `data/telemetry_raw.csv`, the engine names in the dbt mart match the generator, and the cleaner's columns are declared in the dbt source.
 
-The dbt models and the dashboard have no automated tests.
+`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI.
+
+The dashboard has no automated tests.
 
 ## Sample data
 
@@ -163,7 +166,7 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 - `fact_telemetry_readings` refers to the dimension tables by hard-coded name rather than through `source()` or `ref()`, so they do not appear in dbt lineage.
 - `sql/star_schema_design.sql` also defines a fact table and a bridge table in `telemetry_clean`. The dbt project builds its own fact table in `telemetry_clean_core` and uses only the two dimension tables from that file.
 - `engine_performance_summary` does not read `dim_engines`. It derives `engine_name` from the five engine ids with a `CASE` expression and fills `engine_type`, `manufacturer` ("Example Aerospace", a made-up name), `operational_status` and `installation_date` with constants.
-- `models/schema.yml` ends with a top-level `tests:` block that holds a grain check as inline SQL. dbt-core 1.8.7 does not turn that block into a test, so the check never runs.
+- `models/schema.yml` ends with a top-level `tests:` block that holds a grain check as inline SQL. dbt does not turn that block into a test (checked with dbt-core 1.8.7 and 1.12.5), so the check never runs.
 - The `ANALYZE` post-hook on `fact_telemetry_readings` is configured both in `dbt_project.yml` and in the model, so it runs twice.
 - A line that is valid JSON but not an object, or a record whose timestamp is not a string, stops the cleaner at that line: it writes the rows read so far, logs the error and still exits with status 0. The generator never emits such lines, and the tests do not cover them.
 - The cleaner's lower bound for temperature is -273.15, absolute zero in Celsius, while the generator and the dbt models label temperature as Fahrenheit.

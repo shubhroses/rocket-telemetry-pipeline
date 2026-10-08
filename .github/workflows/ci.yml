@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Run pytest
+        run: python -m pytest -v
+
+      # Same dbt versions as requirements-stable.txt. The rest of that file is
+      # left out because several of its pins have no wheels for Python 3.12.
+      - name: Install dbt
+        run: python -m pip install dbt-core==1.8.7 dbt-redshift==1.8.1
+
+      - name: Install dbt packages
+        working-directory: dbt/telemetry_analytics
+        env:
+          DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+        run: dbt deps
+
+      # dbt parse reads the project, resolves ref() and source() in the models
+      # and builds the manifest, schema tests included, without opening a
+      # warehouse connection. The values below only satisfy the env_var()
+      # calls in the example profile.
+      - name: Parse the dbt project
+        working-directory: dbt/telemetry_analytics
+        env:
+          DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+          REDSHIFT_HOST: localhost
+          REDSHIFT_USER: ci
+          REDSHIFT_PASSWORD: not-a-real-password
+        run: |
+          cp ../profiles.yml.example ../profiles.yml
+          dbt parse --profiles-dir ..
