@@ -175,3 +175,7 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 ## Author
 
 Shubhrose Singh. First written in June and July 2025. This repository is a cleaned copy of that project, and its history starts at the import commit.
+
+## License
+
+MIT. See `LICENSE`.
