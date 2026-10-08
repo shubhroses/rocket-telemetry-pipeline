@@ -92,6 +92,8 @@ python3 python/ingest_and_clean.py --input data/telemetry_raw.csv --output data/
 python3 python/generate_telemetry.py 1000 | python3 python/ingest_and_clean.py
 ```
 
+Both forms overwrite sample files that are tracked in `data/` (see [Sample data](#sample-data)); `git restore data/` brings the committed sample back. One test compares those files with the figures quoted in that section, so the suite fails while `data/` holds a different run.
+
 ### 2. Warehouse prerequisites
 
 The remaining steps expect:
@@ -122,7 +124,7 @@ The pinned versions were released between December 2022 and September 2024. The 
 
 dbt needs a profile named `telemetry_analytics` (the `profile` set in `dbt_project.yml`). `dbt/profiles.yml.example` is that profile with the host, user and password read from the environment variables `REDSHIFT_HOST`, `REDSHIFT_USER` and `REDSHIFT_PASSWORD`, so the copy holds no connection details. `dbt/profiles.yml` is git-ignored. dbt does not look in `dbt/` by default, hence `--profiles-dir ..`; copying the example to `~/.dbt/profiles.yml` works without the flag.
 
-The example sets `schema: telemetry_clean`, and that value should stay. With dbt's default schema naming the models are then built in `telemetry_clean_staging`, `telemetry_clean_core` and `telemetry_clean_marts`, which are the names the dashboard queries.
+The example sets `schema: telemetry_clean`, and that value should stay. With dbt's default schema naming the models are then built in `telemetry_clean_staging`, `telemetry_clean_core` and `telemetry_clean_marts`, and the dashboard queries the last two by name.
 
 ### 4. Start the dashboard
 
@@ -168,9 +170,9 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 - `engine_performance_summary` does not read `dim_engines`. It derives `engine_name` from the five engine ids with a `CASE` expression and fills `engine_type`, `manufacturer` ("Example Aerospace", a made-up name), `operational_status` and `installation_date` with constants.
 - `models/schema.yml` ends with a top-level `tests:` block that holds a grain check as inline SQL. dbt does not turn that block into a test (checked with dbt-core 1.8.7 and 1.12.5), so the check never runs.
 - The `ANALYZE` post-hook on `fact_telemetry_readings` is configured both in `dbt_project.yml` and in the model, so it runs twice.
-- A line that is valid JSON but not an object, or a record whose timestamp is not a string, stops the cleaner at that line: it writes the rows read so far, logs the error and still exits with status 0. The generator never emits such lines, and the tests do not cover them.
+- A line that holds a bare JSON number, `true`, `false` or `null`, or a record whose timestamp is not a string, stops the cleaner at that line: it writes the rows read so far, logs the error and still exits with status 0. The generator never emits such lines, and the tests do not cover them.
 - The cleaner's lower bound for temperature is -273.15, absolute zero in Celsius, while the generator and the dbt models label temperature as Fahrenheit.
-- In the dashboard, the "Auto Refresh" checkbox is not connected to any refresh logic, and the status banner, the sidebar objectives and the footer status line (including its data quality and response time figures) are static text.
+- In the dashboard, the "Auto Refresh" checkbox is not connected to any refresh logic, and the status banner, the sidebar objectives and the footer status line (including its data quality and response time figures) are static text. Its subtitle and one section heading say "Real-time", but each page load only re-reads the tables that the last `dbt run` built.
 
 ## Author
 

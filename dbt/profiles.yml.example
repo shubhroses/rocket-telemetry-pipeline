@@ -23,8 +23,8 @@ telemetry_analytics:
       # sources.yml reads from the database named dev.
       dbname: dev
       # Keep this value. dbt appends the custom schema of each model to it, which
-      # gives telemetry_clean_staging, telemetry_clean_core and telemetry_clean_marts,
-      # the names the dashboard queries.
+      # gives telemetry_clean_staging, telemetry_clean_core and telemetry_clean_marts.
+      # The dashboard queries the last two by name.
       schema: telemetry_clean
       threads: 4
       sslmode: require
