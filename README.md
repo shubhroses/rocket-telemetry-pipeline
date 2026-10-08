@@ -37,6 +37,8 @@ python/streamlit_dashboard.py    reads the fact table and both marts
 | `config/airbyte_config.json` | Placeholder Airbyte API settings; no script reads it |
 | `data/` | Output of one sample run (raw and cleaned) |
 | `requirements-stable.txt` | Pinned dbt, Streamlit, pandas, Plotly and psycopg2 versions |
+| `tests/test_pipeline.py` | pytest suite for the generator and the cleaner |
+| `requirements-dev.txt`, `pytest.ini` | Test dependency (pytest) and test configuration |
 
 ## What each stage does
 
@@ -133,6 +135,22 @@ streamlit run python/streamlit_dashboard.py
 
 `config/redshift_connection.json` is git-ignored. Streamlit serves the dashboard at `http://localhost:8501` by default.
 
+## Tests
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+python3 -m pytest
+```
+
+Any virtualenv with Python 3.10 or later will do; the suite was run on Python 3.10, 3.13 and 3.14. The 12 tests in `tests/test_pipeline.py` run the generator and the cleaner as command line programs inside temporary directories and check that:
+
+- the generator writes only JSON Lines to stdout, with known engine ids, readings 1 to 5 seconds apart and exact duplicates appended after them, and that with a seeded random module the three fault rates are close to their configured values;
+- the cleaner's output has no repeated (`timestamp`, `engine_id`) pair, keeps every value inside the ranges it enforces, matches an independent restatement of the cleaning rules row for row, and comes with logged counts that add up;
+- each cleaning rule holds for a set of handwritten records, the default output path is used when none is given, and a missing input file gives exit status 1;
+- `data/telemetry_clean.csv` is what the cleaner produces from `data/telemetry_raw.csv`, the engine names in the dbt mart match the generator, and the cleaner's columns are declared in the dbt source.
+
+The dbt models and the dashboard have no automated tests.
+
 ## Sample data
 
 `data/` holds one run from 2025-07-11: 1,047 generated records (1,000 unique readings plus 47 injected duplicates) in `telemetry_raw.csv`, and 999 cleaned rows in `telemetry_clean.csv`, 30 of which have at least one missing measurement. The cleaner dropped one reading for a temperature below -273.15 and corrected 12 (5 negative pressures and 7 zero fuel flows). Running the cleaner on `telemetry_raw.csv` reproduces `telemetry_clean.csv` exactly.
@@ -147,6 +165,7 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 - `engine_performance_summary` does not read `dim_engines`. It derives `engine_name` from the five engine ids with a `CASE` expression and fills `engine_type`, `manufacturer` ("Example Aerospace", a made-up name), `operational_status` and `installation_date` with constants.
 - `models/schema.yml` ends with a top-level `tests:` block that holds a grain check as inline SQL. dbt-core 1.8.7 does not turn that block into a test, so the check never runs.
 - The `ANALYZE` post-hook on `fact_telemetry_readings` is configured both in `dbt_project.yml` and in the model, so it runs twice.
+- A line that is valid JSON but not an object, or a record whose timestamp is not a string, stops the cleaner at that line: it writes the rows read so far, logs the error and still exits with status 0. The generator never emits such lines, and the tests do not cover them.
 - The cleaner's lower bound for temperature is -273.15, absolute zero in Celsius, while the generator and the dbt models label temperature as Fahrenheit.
 - In the dashboard, the "Auto Refresh" checkbox is not connected to any refresh logic, and the status banner, the sidebar objectives and the footer status line (including its data quality and response time figures) are static text.
 
