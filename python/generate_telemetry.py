@@ -2,7 +2,7 @@
 """
 Rocket Engine Telemetry Data Generator
 
-Generates realistic rocket engine telemetry data for testing data quality pipelines.
+Generates synthetic rocket engine telemetry data for testing data quality pipelines.
 
 USAGE:
     python generate_telemetry.py [num_records]
@@ -18,16 +18,18 @@ OUTPUT:
 
 FEATURES:
     - 5 simulated rocket engines with different performance characteristics
-    - Realistic sensor noise and physics-based correlations
-    - Configurable anomaly injection (3-5% rate):
-        * Missing sensor readings (simulates sensor failures)
-        * Out-of-range values (simulates sensor malfunctions)
-        * Duplicate records (simulates data pipeline issues)
-        * Critical engine failures (pressure spikes, thermal runaway, etc.)
+    - Gaussian noise on every measurement. Pressure and fuel flow rise with an
+      engine's performance factor and temperature falls with it
+    - Fault injection at the fixed rates in TelemetryGenerator.anomaly_rates:
+        * Missing sensor readings (simulates sensor failures), about 3% of readings
+        * Out-of-range values (simulates sensor malfunctions), about 5%
+        * Duplicate records (simulates data pipeline issues), about 4%
+        * Critical engine failures (pressure spikes, thermal runaway, etc.),
+          0.16% to 0.36% depending on the engine
     
 PURPOSE:
-    Test data quality validation, anomaly detection, and data pipeline robustness
-    with realistic aerospace telemetry scenarios.
+    Provide input with known kinds of faults for testing data quality validation,
+    anomaly detection and the rest of the pipeline.
 """
 
 import json
@@ -47,23 +49,23 @@ class TelemetryGenerator:
             "ENG-005": {"performance": 0.85, "failure_rate": 0.13, "name": "Engine Epsilon"},   # Good condition
         }
         
-        # Realistic parameter ranges
+        # Parameter ranges
         self.base_params = {
             "chamber_pressure": {"min": 150, "max": 300, "unit": "psi"},
             "fuel_flow": {"min": 50, "max": 150, "unit": "kg/s"},  
             "temperature": {"min": 2000, "max": 4000, "unit": "°F"}
         }
         
-        # More moderate anomaly rates for realistic demo
+        # Fault injection rates
         self.anomaly_rates = {
             "missing_fields": 0.03,      # 3% missing data (sensor failures)
             "out_of_range": 0.05,        # 5% sensor errors  
             "duplicates": 0.04,          # 4% duplicate readings
-            "critical_failures": 0.02    # 2% critical engine failures
+            "critical_failures": 0.02    # times the engine's failure_rate: 0.16% to 0.36% of readings
         }
         
     def generate_base_reading(self, engine_id: str, timestamp: datetime) -> Dict[str, Any]:
-        """Generate a realistic telemetry reading for an engine"""
+        """Generate one telemetry reading for an engine"""
         engine_config = self.engines[engine_id]
         performance_factor = engine_config["performance"]
         
@@ -83,7 +85,7 @@ class TelemetryGenerator:
         base_range = self.base_params["chamber_pressure"]
         optimal_pressure = base_range["min"] + (base_range["max"] - base_range["min"]) * performance_factor
         
-        # Add realistic sensor noise
+        # Add Gaussian sensor noise
         noise = random.normalvariate(0, 10)
         return max(0, optimal_pressure + noise)
     
@@ -104,7 +106,7 @@ class TelemetryGenerator:
         temp_factor = 1.0 + (0.3 * (1 - performance_factor))
         optimal_temp = base_range["min"] + (base_range["max"] - base_range["min"]) * temp_factor
         
-        # Add realistic sensor noise
+        # Add Gaussian sensor noise
         noise = random.normalvariate(0, 50)
         return max(500, optimal_temp + noise)
     
@@ -183,7 +185,7 @@ class TelemetryGenerator:
         return reading
     
     def generate_telemetry_batch(self, num_records: int) -> List[Dict[str, Any]]:
-        """Generate a batch of telemetry records with realistic timing"""
+        """Generate a batch of telemetry records, each 1-5 seconds after the previous one"""
         records = []
         duplicates_to_add = []
         
@@ -191,7 +193,7 @@ class TelemetryGenerator:
         current_timestamp = datetime.now()
         
         for i in range(num_records):
-            # Realistic time progression - each reading 1-5 seconds after the previous
+            # Time progression - each reading 1-5 seconds after the previous
             if i > 0:  # Skip time advancement for first record
                 time_interval = random.uniform(1, 5)  # Random interval between readings
                 current_timestamp += timedelta(seconds=time_interval)

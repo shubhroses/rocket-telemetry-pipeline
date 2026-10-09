@@ -1,46 +1,38 @@
 /*
-    Daily Anomaly Trends Mart - Time-Series Analytics
+    Daily Anomaly Trends Mart
     
-    Transforms daily telemetry data into operational intelligence with trend analysis,
-    anomaly detection, and automated alerting for rocket engine monitoring.
+    One row per calendar day that has readings, with that day's counts and
+    statistics and a comparison with the days before it.
     
-    SOURCE: fact_telemetry_readings (enhanced with metric dimensions)
-    
-    BUSINESS PURPOSE:
-    - Operational dashboards showing daily performance trends
-    - Predictive maintenance through anomaly pattern detection  
-    - Automated alerting for critical operational conditions
-    - Historical performance analysis and benchmarking
+    SOURCE: fact_telemetry_readings
     
     DATA TRANSFORMATIONS:
     Daily Aggregation:
     - Total readings and anomaly counts by date
     - Anomaly rate percentages and breakdowns by type
     - Performance score statistics (avg, min, max, stddev)
-    - Health status distribution across all engines
-    - Active engine counts and data freshness metrics
+    - Reading counts by health status
+    - Number of distinct engines, earliest and latest processing time
+    - Day of week and a weekend flag
     
-    Time-Series Analysis:
-    - 7-day moving averages for anomaly rates and performance scores
-    - Day-over-day and week-over-week change calculations
-    - Trend classification: IMPROVING, STABLE, DETERIORATING
-    - Ranking system for worst/best performance days
+    Comparison Across Days:
+    - 7-day moving averages for anomaly rates and performance scores (the row
+      and the six before it, so days without readings are skipped)
+    - Day-over-day and week-over-week changes (one row and seven rows back)
+    - Trend classification: IMPROVING, STABLE, DETERIORATING (the day's value
+      against its moving average)
+    - Ranks of the days by anomaly rate and by performance score
     
-    ALERT LOGIC:
+    ALERT LOGIC (alert_flag holds the first condition that matches, else NULL):
     - HIGH_ANOMALY_ALERT: Daily anomaly rate > 25%
     - CRITICAL_HEALTH_ALERT: Any readings in CRITICAL health status
-    - RAPID_DETERIORATION_ALERT: Day-over-day anomaly increase > 10%
+    - RAPID_DETERIORATION_ALERT: Day-over-day anomaly rate increase > 10 points
+    The flag is only a column. Nothing sends a notification.
     
-    ANALYTICAL FEATURES:
-    - Weekend vs weekday pattern analysis
-    - Seasonal trend detection with moving averages
-    - Performance variance analysis (standard deviation)
-    - Multi-engine operational status tracking
+    MATERIALIZATION: Table
     
-    MATERIALIZATION: Table for fast dashboard queries and historical analysis
-    
-    USAGE: Powers operational monitoring dashboards, maintenance scheduling,
-           and performance trending reports for mission-critical rocket engines
+    USAGE: The dashboard reads the latest 7 rows and shows the anomaly rate,
+           average score and alert flag of the newest one
 */
 
 {{ config(

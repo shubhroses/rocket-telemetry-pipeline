@@ -117,8 +117,8 @@ models:
           - not_null
 
       - name: is_out_of_normal_range
-        description: Enhanced anomaly detection using metric dimension normal range
-          thresholds
+        description: True when a measurement is outside the normal range stored in
+          dim_telemetry_metrics
         tests:
           - not_null
           - accepted_values:
@@ -130,7 +130,7 @@ models:
   # MARTS MODELS
   # =====================================
   - name: engine_performance_summary
-    description: Business intelligence mart providing engine performance KPIs and rankings
+    description: One row per engine with averages, anomaly rate, rankings and a health status
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -181,7 +181,8 @@ models:
         description: Average pressure as percentage of design maximum
 
   - name: daily_anomaly_trends
-    description: Time-based analytics mart showing daily anomaly patterns and trends
+    description: One row per day with anomaly counts, performance statistics, moving averages
+      and an alert flag
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -226,7 +227,8 @@ models:
                 - DETERIORATING
 
       - name: alert_flag
-        description: Alert flag for operational attention
+        description: HIGH_ANOMALY_ALERT, CRITICAL_HEALTH_ALERT or RAPID_DETERIORATION_ALERT for
+          the day, otherwise null
 
       - name: active_engines
         description: Number of engines active on this date

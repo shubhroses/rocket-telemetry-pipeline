@@ -1,8 +1,9 @@
 /*
     Fact Table: Telemetry Readings (Star Schema Core)
     
-    Transforms staging telemetry data into a dimensional fact table for analytics
-    and reporting with proper foreign key relationships.
+    Transforms staging telemetry data into a fact table with keys looked up from
+    the engine and metric dimension tables. No foreign key constraints are
+    declared: a reading without a matching dimension row gets the key -1.
     
     SOURCE: stg_telemetry_readings (staging layer)
     
@@ -22,7 +23,7 @@
     
     MATERIALIZATION: Table with ANALYZE post-hook for query performance
     
-    USAGE: Powers telemetry dashboards, engine performance analytics, and anomaly detection
+    USAGE: Read by engine_performance_summary, daily_anomaly_trends and the dashboard
 */
 
 {{ config(
@@ -91,7 +92,7 @@ fact_data AS (
         s.is_anomaly,
         s.anomaly_type,
         
-        -- Enhanced anomaly detection using metric dimension thresholds
+        -- Second anomaly flag, from the normal ranges stored in the metric dimension
         CASE 
             WHEN s.chamber_pressure_psi < mp.normal_min_value OR s.chamber_pressure_psi > mp.normal_max_value THEN TRUE
             WHEN s.fuel_flow_kg_per_sec < mf.normal_min_value OR s.fuel_flow_kg_per_sec > mf.normal_max_value THEN TRUE

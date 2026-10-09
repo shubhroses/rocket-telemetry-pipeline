@@ -1,12 +1,15 @@
 /*
     Engine Performance Summary Mart - Simplified
     
-    This model provides:
-    - Aggregated performance metrics by engine
-    - Anomaly rates and trends
-    - Key performance indicators for operational dashboards
+    One row per engine, with:
+    - Averages, minimums, maximums and standard deviations of the measurements
+    - Anomaly counts and the anomaly rate
+    - Ranks by performance score, anomaly rate and fuel efficiency ratio
+    - A health status derived from the anomaly rate
     
-    Note: Simplified to avoid dimension table join issues
+    Note: Simplified to avoid dimension table join issues. dim_engines is not
+    read: engine_name comes from a CASE on engine_id, and engine_type,
+    manufacturer, operational_status and installation_date are constants.
 */
 
 {{ config(
@@ -70,7 +73,7 @@ engine_metrics AS (
         COUNT(CASE WHEN f.anomaly_type LIKE '%FUEL%' THEN 1 END) AS fuel_anomalies,
         COUNT(CASE WHEN f.anomaly_type LIKE '%TEMPERATURE%' THEN 1 END) AS temperature_anomalies,
         
-        -- Operational efficiency (using reasonable design limits)
+        -- Average as a percentage of a fixed limit (350 psi, 200 kg/s, 4000 °F)
         ROUND(AVG(f.chamber_pressure_psi) * 100.0 / 350.0, 2) AS pressure_utilization_percent,
         ROUND(AVG(f.fuel_flow_kg_per_sec) * 100.0 / 200.0, 2) AS fuel_flow_utilization_percent,
         ROUND(AVG(f.temperature_fahrenheit) * 100.0 / 4000.0, 2) AS temperature_utilization_percent,
@@ -79,7 +82,7 @@ engine_metrics AS (
         MIN(f.reading_timestamp::date) AS earliest_reading_date,
         MAX(f.reading_timestamp::date) AS latest_reading_date,
         
-        -- Operational analysis (simplified without time dimension)
+        -- No burn phase is modelled: these repeat total_readings and avg_performance_score
         COUNT(*) AS burn_phase_readings,
         AVG(f.performance_score) AS burn_phase_avg_performance,
         

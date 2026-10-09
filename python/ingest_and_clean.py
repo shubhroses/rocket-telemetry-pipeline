@@ -26,7 +26,7 @@ INPUT:
 OUTPUT:
     - CSV format with cleaned and validated data
     - Duplicate records removed (based on timestamp + engine_id)
-    - Detailed processing logs to stderr and errors.log
+    - Processing log to stderr and errors.log
 
 CLEANING OPERATIONS:
     - Validates required fields (timestamp, engine_id)
@@ -42,8 +42,8 @@ COMMAND LINE OPTIONS:
     -o, --output FILE    Output CSV file (default: data/telemetry_clean.csv)
 
 PURPOSE:
-    Prepare raw telemetry data for analysis by cleaning common data quality issues
-    while maintaining data integrity and providing detailed processing statistics.
+    Prepare raw telemetry data for analysis by cleaning common data quality issues,
+    and report how many records were corrected, dropped or removed as duplicates.
 """
 
 import json
@@ -124,7 +124,7 @@ class TelemetryProcessor:
                         corrected = True
                         self.logger.warning(f"Corrected negative pressure: {value} → {abs(value)}")
                     
-                    # Fix unrealistic temperature values
+                    # Drop impossible temperatures and warn about very high ones
                     elif field == "temperature":
                         if value < -273.15:  # Below absolute zero
                             self.logger.error(f"Temperature below absolute zero: {value}. Dropping record.")
@@ -132,7 +132,7 @@ class TelemetryProcessor:
                         elif value > 6000:  # Unrealistically high for rocket engines
                             self.logger.warning(f"Extremely high temperature detected: {value}")
                     
-                    # Fix zero fuel flow (set to minimum realistic value)
+                    # Fix zero fuel flow (set to 0.1)
                     elif field == "fuel_flow" and value == 0:
                         cleaned_record[field] = 0.1  # Minimum flow
                         corrected = True
