@@ -68,6 +68,7 @@ st.markdown(
     }
     .critical-alert {
         background-color: #ffebee;
+        color: #31333F;
         padding: 1rem;
         border-radius: 0.5rem;
         border-left: 5px solid #d32f2f;

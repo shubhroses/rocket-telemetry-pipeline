@@ -183,7 +183,6 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 - The cleaner's lower bound for temperature is -273.15, absolute zero in Celsius, while the generator and the dbt models label temperature as Fahrenheit.
 - The dashboard shows the tables as the last `dbt run` built them and has no refresh of its own. It runs its three queries when the page is loaded and when "Reload Data" is pressed.
 - The dashboard caches what it reads from `config/redshift_connection.json`, and that includes a failed read. If the file is missing or invalid when the page is first opened, the error stays on the page after the file is fixed, also after "Reload Data", until the Streamlit server is restarted.
-- The dashboard's alert banner sets a pale background but no text colour, so in Streamlit's dark theme its text is nearly invisible.
 
 ## Author
 
