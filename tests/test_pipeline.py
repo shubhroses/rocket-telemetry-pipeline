@@ -263,9 +263,7 @@ def test_cleaner_output_follows_the_cleaning_rules(tmp_path):
     assert summary["parsing_errors"] == 0
     assert summary["valid"] + summary["dropped"] == summary["total"]
     assert summary["dropped"] == sum(1 for r in records if below_minimum_temperature(r))
-    assert summary["corrected"] == sum(
-        1 for r in records if needs_correction(r) and not below_minimum_temperature(r)
-    )
+    assert summary["corrected"] == sum(1 for r in records if needs_correction(r) and not below_minimum_temperature(r))
     assert summary["valid"] - summary["duplicates"] == len(rows)
 
     # The same summary is written to errors.log in the working directory.
@@ -286,10 +284,26 @@ def test_cleaner_applies_each_rule_to_handwritten_records(tmp_path):
         # Corrected: negative pressure, zero fuel flow, and both in one record.
         json.dumps({"timestamp": "2025-07-11T16:00:01", "engine_id": "ENG-001", **base, "chamber_pressure": -79.5}),
         json.dumps({"timestamp": "2025-07-11T16:00:02", "engine_id": "ENG-001", **base, "fuel_flow": 0}),
-        json.dumps({"timestamp": "2025-07-11T16:00:03", "engine_id": "ENG-001", **base, "chamber_pressure": -10.0, "fuel_flow": 0.0}),
+        json.dumps(
+            {
+                "timestamp": "2025-07-11T16:00:03",
+                "engine_id": "ENG-001",
+                **base,
+                "chamber_pressure": -10.0,
+                "fuel_flow": 0.0,
+            }
+        ),
         # Dropped: temperature below the minimum, with and without another fault.
         json.dumps({"timestamp": "2025-07-11T16:00:04", "engine_id": "ENG-001", **base, "temperature": -273.16}),
-        json.dumps({"timestamp": "2025-07-11T16:00:05", "engine_id": "ENG-001", **base, "chamber_pressure": -5.0, "temperature": -300.0}),
+        json.dumps(
+            {
+                "timestamp": "2025-07-11T16:00:05",
+                "engine_id": "ENG-001",
+                **base,
+                "chamber_pressure": -5.0,
+                "temperature": -300.0,
+            }
+        ),
         # Kept: temperature exactly at the minimum, and a very high one.
         json.dumps({"timestamp": "2025-07-11T16:00:06", "engine_id": "ENG-001", **base, "temperature": -273.15}),
         json.dumps({"timestamp": "2025-07-11T16:00:07", "engine_id": "ENG-001", **base, "temperature": 9000.0}),
@@ -359,9 +373,7 @@ def test_cleaner_exits_with_status_1_when_the_input_file_is_missing(tmp_path):
 
 
 def test_sample_csv_is_the_cleaner_output_for_the_sample_raw_file(tmp_path):
-    result = run_script(
-        CLEANER, tmp_path, "--input", str(REPO / "data" / "telemetry_raw.csv"), "--output", "clean.csv"
-    )
+    result = run_script(CLEANER, tmp_path, "--input", str(REPO / "data" / "telemetry_raw.csv"), "--output", "clean.csv")
 
     assert result.returncode == 0
     header, rows = read_csv(tmp_path / "clean.csv")
@@ -382,9 +394,9 @@ def test_sample_csv_is_the_cleaner_output_for_the_sample_raw_file(tmp_path):
 
 
 def test_engine_names_in_the_dbt_mart_match_the_generator():
-    sql = (
-        REPO / "dbt" / "telemetry_analytics" / "models" / "marts" / "engine_performance_summary.sql"
-    ).read_text(encoding="utf-8")
+    sql = (REPO / "dbt" / "telemetry_analytics" / "models" / "marts" / "engine_performance_summary.sql").read_text(
+        encoding="utf-8"
+    )
     in_mart = dict(re.findall(r"WHEN f\.engine_id = '([^']+)' THEN '([^']+)'", sql))
     engines = generate_telemetry.TelemetryGenerator().engines
 
@@ -393,9 +405,7 @@ def test_engine_names_in_the_dbt_mart_match_the_generator():
 
 
 def test_cleaner_columns_are_declared_in_the_dbt_source():
-    sources = (
-        REPO / "dbt" / "telemetry_analytics" / "models" / "staging" / "sources.yml"
-    ).read_text(encoding="utf-8")
+    sources = (REPO / "dbt" / "telemetry_analytics" / "models" / "staging" / "sources.yml").read_text(encoding="utf-8")
     declared = set(re.findall(r"- name: (\w+)", sources))
 
     assert set(CSV_HEADER) <= declared
