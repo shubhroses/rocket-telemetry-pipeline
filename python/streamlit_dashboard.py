@@ -87,9 +87,12 @@ st.markdown(
 )
 
 
-@st.cache_resource
 def init_database_connection():
-    """Read the Redshift connection parameters from config/redshift_connection.json"""
+    """Read the Redshift connection parameters from config/redshift_connection.json
+
+    The file is read on every call. With st.cache_resource a failed read was
+    cached too, and the error stayed on the page after the file had been fixed.
+    """
     try:
         with open("config/redshift_connection.json", "r") as f:
             config = json.load(f)

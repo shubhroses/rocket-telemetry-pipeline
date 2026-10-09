@@ -198,15 +198,17 @@ def render(tmp_path, monkeypatch):
     streamlit = pytest.importorskip("streamlit")
     testing = pytest.importorskip("streamlit.testing.v1")
 
+    # Streamlit's caches live as long as the process. Start each test with empty ones.
+    streamlit.cache_data.clear()
+    streamlit.cache_resource.clear()
+
     def run(tables, *, connection_file=True):
         if connection_file:
             settings = {"host": "stand-in", "port": 5439, "database": "dev", "username": "u", "password": "p"}
-            (tmp_path / "config").mkdir()
+            (tmp_path / "config").mkdir(exist_ok=True)
             (tmp_path / "config" / "redshift_connection.json").write_text(json.dumps(settings), encoding="utf-8")
-        # The dashboard opens config/redshift_connection.json relative to the working directory
-        # and keeps what it read in Streamlit's resource cache.
+        # The dashboard opens config/redshift_connection.json relative to the working directory.
         monkeypatch.chdir(tmp_path)
-        streamlit.cache_resource.clear()
 
         def read_sql(query, connection):
             (table,) = [name for name in tables if name in query]
@@ -271,3 +273,15 @@ def test_page_reports_a_missing_connection_file_without_connecting(render):
     assert errors[-1] == "No telemetry data available. Check the database connection."
     assert connect.call_count == 0
     assert not page.subheader
+
+
+def test_page_recovers_once_the_connection_file_exists(render):
+    page, _ = render(stand_in_tables(), connection_file=False)
+    assert page.error
+
+    # The page is opened again in the same server process, now with the file in place.
+    page, connect = render(stand_in_tables())
+
+    assert not page.error
+    assert [heading.value for heading in page.subheader] == SECTIONS
+    assert connect.call_count == 3

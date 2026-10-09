@@ -157,12 +157,12 @@ Any virtualenv with Python 3.10 or later will do; the suite was run on Python 3.
 - each cleaning rule holds for a set of handwritten records, the default output path is used when none is given, and a missing input file gives exit status 1;
 - `data/telemetry_clean.csv` is what the cleaner produces from `data/telemetry_raw.csv`, the engine names in the dbt mart match the generator, and the cleaner's columns are declared in the dbt source.
 
-The 9 tests in `tests/test_dashboard.py` cover the dashboard without a warehouse:
+The 10 tests in `tests/test_dashboard.py` cover the dashboard without a warehouse:
 
 - 5 static checks compile `python/streamlit_dashboard.py` and read its syntax tree without importing it. They fail on a syntax error, on a missing function or a missing `main()` call, on a change to the four section headings, on a query whose schema, table or columns the dbt models do not define, and on page text that holds an emoji, the word "real-time" or a percentage typed into a string.
-- 4 render checks run the whole page with Streamlit's `AppTest`, with `psycopg2.connect` and `pandas.read_sql` replaced so that the queries return stand-in tables: with data, without anomalies, with empty tables and without a connection file. They need the packages in `requirements-stable.txt` and are skipped when those are not installed. To run them, install `requirements-dev.txt` into the virtualenv from [step 3](#3-run-dbt).
+- 5 render checks run the whole page with Streamlit's `AppTest`, with `psycopg2.connect` and `pandas.read_sql` replaced so that the queries return stand-in tables: with data, without anomalies, with empty tables, without a connection file, and with a connection file that is added after a failed load. They need the packages in `requirements-stable.txt` and are skipped when those are not installed. To run them, install `requirements-dev.txt` into the virtualenv from [step 3](#3-run-dbt).
 
-`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the two ruff commands and the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI. The 4 render checks for the dashboard are skipped there as well, because the workflow does not install the dashboard's dependencies.
+`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the two ruff commands and the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI. The 5 render checks for the dashboard are skipped there as well, because the workflow does not install the dashboard's dependencies.
 
 ## Sample data
 
@@ -182,7 +182,6 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 - A line that holds a bare JSON number, `true`, `false` or `null`, or a record whose timestamp is not a string, stops the cleaner at that line: it writes the rows read so far, logs the error and still exits with status 0. The generator never emits such lines, and the tests do not cover them.
 - The cleaner's lower bound for temperature is -273.15, absolute zero in Celsius, while the generator and the dbt models label temperature as Fahrenheit.
 - The dashboard shows the tables as the last `dbt run` built them and has no refresh of its own. It runs its three queries when the page is loaded and when "Reload Data" is pressed.
-- The dashboard caches what it reads from `config/redshift_connection.json`, and that includes a failed read. If the file is missing or invalid when the page is first opened, the error stays on the page after the file is fixed, also after "Reload Data", until the Streamlit server is restarted.
 
 ## Author
 
