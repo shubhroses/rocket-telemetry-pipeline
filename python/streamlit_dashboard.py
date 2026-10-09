@@ -323,8 +323,6 @@ def main():
     # Sidebar controls
     st.sidebar.header("Controls")
     
-    auto_refresh = st.sidebar.checkbox("Auto Refresh (30s)", value=False)  # Changed to False
-    
     refresh_button = st.sidebar.button("Reload Data")
     if refresh_button:
         st.cache_data.clear()
