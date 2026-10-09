@@ -40,7 +40,7 @@ python/streamlit_dashboard.py    reads the fact table and both marts
 | `tests/test_pipeline.py` | pytest suite for the generator and the cleaner |
 | `tests/test_dashboard.py` | pytest checks for the dashboard: static ones that run everywhere, and render ones that need the dashboard's dependencies |
 | `requirements-dev.txt`, `pytest.ini`, `ruff.toml` | Test and lint dependencies (pytest, ruff) and their configuration |
-| `.github/workflows/ci.yml` | GitHub Actions workflow: pytest, then `dbt deps` and `dbt parse` |
+| `.github/workflows/ci.yml` | GitHub Actions workflow: ruff, pytest, then `dbt deps` and `dbt parse` |
 
 ## What each stage does
 
@@ -144,7 +144,11 @@ streamlit run python/streamlit_dashboard.py
 ```bash
 python3 -m pip install -r requirements-dev.txt
 python3 -m pytest
+python3 -m ruff check .
+python3 -m ruff format --check .
 ```
+
+The two ruff commands lint the Python files in `python/` and `tests/` and check their formatting. `ruff.toml` sets a line length of 120 and selects the pycodestyle, pyflakes and import-order rules.
 
 Any virtualenv with Python 3.10 or later will do; the suite was run on Python 3.10, 3.13 and 3.14. The 12 tests in `tests/test_pipeline.py` run the generator and the cleaner as command line programs inside temporary directories and check that:
 
@@ -158,7 +162,7 @@ The 9 tests in `tests/test_dashboard.py` cover the dashboard without a warehouse
 - 5 static checks compile `python/streamlit_dashboard.py` and read its syntax tree without importing it. They fail on a syntax error, on a missing function or a missing `main()` call, on a change to the four section headings, on a query whose schema, table or columns the dbt models do not define, and on page text that holds an emoji, the word "real-time" or a percentage typed into a string.
 - 4 render checks run the whole page with Streamlit's `AppTest`, with `psycopg2.connect` and `pandas.read_sql` replaced so that the queries return stand-in tables: with data, without anomalies, with empty tables and without a connection file. They need the packages in `requirements-stable.txt` and are skipped when those are not installed. To run them, install `requirements-dev.txt` into the virtualenv from [step 3](#3-run-dbt).
 
-`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI. The 4 render checks for the dashboard are skipped there as well, because the workflow does not install the dashboard's dependencies.
+`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the two ruff commands and the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI. The 4 render checks for the dashboard are skipped there as well, because the workflow does not install the dashboard's dependencies.
 
 ## Sample data
 
