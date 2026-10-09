@@ -46,14 +46,14 @@ PURPOSE:
     and report how many records were corrected, dropped or removed as duplicates.
 """
 
-import json
-import csv
-import sys
-import logging
 import argparse
+import csv
+import json
+import logging
+import sys
 from datetime import datetime
-from typing import Dict, Any, List, Optional, TextIO
 from pathlib import Path
+from typing import Any, Dict, List, Optional, TextIO
 
 
 class TelemetryProcessor:
@@ -133,7 +133,7 @@ class TelemetryProcessor:
                     elif field == "fuel_flow" and value == 0:
                         cleaned_record[field] = 0.1  # Minimum flow
                         corrected = True
-                        self.logger.warning(f"Corrected zero fuel flow to 0.1 kg/s")
+                        self.logger.warning("Corrected zero fuel flow to 0.1 kg/s")
 
                 except (ValueError, TypeError) as e:
                     self.logger.error(f"Invalid numeric value for {field}: {e}. Record: {record}")
@@ -177,7 +177,7 @@ class TelemetryProcessor:
 
     def process_stream(self, input_stream: TextIO) -> None:
         """Process telemetry data from input stream"""
-        self.logger.info(f"Starting telemetry data processing...")
+        self.logger.info("Starting telemetry data processing...")
         self.logger.info(f"Output file: {self.output_file}")
 
         # Ensure output directory exists

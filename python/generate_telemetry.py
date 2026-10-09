@@ -36,7 +36,7 @@ import json
 import random
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 
 class TelemetryGenerator:
@@ -241,7 +241,9 @@ def main():
     print(f"# Engine IDs: {list(generator.engines.keys())}", file=sys.stderr)
     print(f"# Started at: {datetime.now().isoformat()}", file=sys.stderr)
     print(
-        f"# Expected anomalies: ~{generator.anomaly_rates['missing_fields'] * 100:.0f}% missing fields, ~{generator.anomaly_rates['out_of_range'] * 100:.0f}% out-of-range values, ~{generator.anomaly_rates['duplicates'] * 100:.0f}% duplicates",
+        f"# Expected anomalies: ~{generator.anomaly_rates['missing_fields'] * 100:.0f}% missing fields, "
+        f"~{generator.anomaly_rates['out_of_range'] * 100:.0f}% out-of-range values, "
+        f"~{generator.anomaly_rates['duplicates'] * 100:.0f}% duplicates",
         file=sys.stderr,
     )
     print(
