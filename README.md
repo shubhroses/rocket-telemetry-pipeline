@@ -74,7 +74,7 @@ The source is `dev.telemetry_raw.telemetry_data`, the table Airbyte writes, incl
 
 ### Dashboard
 
-`python/streamlit_dashboard.py` queries `telemetry_clean_marts.engine_performance_summary`, `telemetry_clean_marts.daily_anomaly_trends` (latest 7 days) and `telemetry_clean_core.fact_telemetry_readings` (latest 50 readings). It shows headline metrics, a performance gauge per engine, the engine summary table, time series of pressure, fuel flow and temperature by engine, an alert banner when the latest day has an `alert_flag`, and a table of recent anomalous readings.
+`python/streamlit_dashboard.py` queries `telemetry_clean_marts.engine_performance_summary`, `telemetry_clean_marts.daily_anomaly_trends` (latest 7 days) and `telemetry_clean_core.fact_telemetry_readings` (latest 50 readings). It shows headline metrics, a performance gauge per engine, the engine summary table, time series of pressure, fuel flow and temperature by engine, an alert banner when the latest day has an `alert_flag`, and a table of recent anomalous readings. A banner at the top says that the telemetry is synthetic. The sidebar has one control, a "Reload Data" button that runs the three queries again.
 
 ## Running it
 
@@ -178,9 +178,12 @@ The engine ids in both files were changed to the `ENG-` prefix when the project 
 - `engine_performance_summary` does not read `dim_engines`. It derives `engine_name` from the five engine ids with a `CASE` expression and fills `engine_type`, `manufacturer` ("Example Aerospace", a made-up name), `operational_status` and `installation_date` with constants.
 - `models/schema.yml` ends with a top-level `tests:` block that holds a grain check as inline SQL. dbt does not turn that block into a test (checked with dbt-core 1.8.7 and 1.12.5), so the check never runs.
 - The `ANALYZE` post-hook on `fact_telemetry_readings` is configured both in `dbt_project.yml` and in the model, so it runs twice.
+- The generator's progress output on stderr says "~2% critical failures". The 2% is a base rate that the code multiplies by each engine's failure rate, which gives the 0.16% to 0.36% of readings stated above.
 - A line that holds a bare JSON number, `true`, `false` or `null`, or a record whose timestamp is not a string, stops the cleaner at that line: it writes the rows read so far, logs the error and still exits with status 0. The generator never emits such lines, and the tests do not cover them.
 - The cleaner's lower bound for temperature is -273.15, absolute zero in Celsius, while the generator and the dbt models label temperature as Fahrenheit.
-- In the dashboard, the "Auto Refresh" checkbox is not connected to any refresh logic, and the status banner, the sidebar objectives and the footer status line (including its data quality and response time figures) are static text. Its subtitle and one section heading say "Real-time", but each page load only re-reads the tables that the last `dbt run` built.
+- The dashboard shows the tables as the last `dbt run` built them and has no refresh of its own. It runs its three queries when the page is loaded and when "Reload Data" is pressed.
+- The dashboard caches what it reads from `config/redshift_connection.json`, and that includes a failed read. If the file is missing or invalid when the page is first opened, the error stays on the page after the file is fixed, also after "Reload Data", until the Streamlit server is restarted.
+- The dashboard's alert banner sets a pale background but no text colour, so in Streamlit's dark theme its text is nearly invisible.
 
 ## Author
 
