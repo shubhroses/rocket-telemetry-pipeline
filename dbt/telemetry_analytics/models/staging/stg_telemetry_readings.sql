@@ -57,14 +57,14 @@ cleaned_data AS (
             ELSE NULL 
         END AS fuel_efficiency_ratio,
         
-        -- Composite performance score (weighted average) - relaxed thresholds
+        -- Performance score: 40 points for pressure in range, 30 for fuel flow, 30 for temperature
         (
             CASE WHEN chamber_pressure_psi BETWEEN 120 AND 350 THEN 0.4 ELSE 0.0 END +
             CASE WHEN fuel_flow_kg_per_sec BETWEEN 30 AND 180 THEN 0.3 ELSE 0.0 END +
             CASE WHEN temperature_fahrenheit BETWEEN 1800 AND 4200 THEN 0.3 ELSE 0.0 END
         ) * 100 AS performance_score,
         
-        -- Data quality flags - more realistic thresholds
+        -- Anomaly flag: any measurement outside limits that are wider than the scoring ranges above
         CASE 
             WHEN chamber_pressure_psi < 80 OR chamber_pressure_psi > 400 THEN TRUE
             WHEN fuel_flow_kg_per_sec < 15 OR fuel_flow_kg_per_sec > 220 THEN TRUE
@@ -72,7 +72,7 @@ cleaned_data AS (
             ELSE FALSE
         END AS is_anomaly,
         
-        -- Anomaly type classification - relaxed thresholds
+        -- Anomaly type: the first of those limits that is crossed (pressure, then fuel flow, then temperature)
         CASE 
             WHEN chamber_pressure_psi < 80 THEN 'LOW_PRESSURE'
             WHEN chamber_pressure_psi > 400 THEN 'HIGH_PRESSURE'
