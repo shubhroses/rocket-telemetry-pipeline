@@ -38,6 +38,7 @@ python/streamlit_dashboard.py    reads the fact table and both marts
 | `data/` | Output of one sample run (raw and cleaned) |
 | `requirements-stable.txt` | Pinned dbt, Streamlit, pandas, Plotly and psycopg2 versions |
 | `tests/test_pipeline.py` | pytest suite for the generator and the cleaner |
+| `tests/test_dashboard.py` | pytest checks for the dashboard: static ones that run everywhere, and render ones that need the dashboard's dependencies |
 | `requirements-dev.txt`, `pytest.ini` | Test dependency (pytest) and test configuration |
 | `.github/workflows/ci.yml` | GitHub Actions workflow: pytest, then `dbt deps` and `dbt parse` |
 
@@ -152,9 +153,12 @@ Any virtualenv with Python 3.10 or later will do; the suite was run on Python 3.
 - each cleaning rule holds for a set of handwritten records, the default output path is used when none is given, and a missing input file gives exit status 1;
 - `data/telemetry_clean.csv` is what the cleaner produces from `data/telemetry_raw.csv`, the engine names in the dbt mart match the generator, and the cleaner's columns are declared in the dbt source.
 
-`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI.
+The 9 tests in `tests/test_dashboard.py` cover the dashboard without a warehouse:
 
-The dashboard has no automated tests.
+- 5 static checks compile `python/streamlit_dashboard.py` and read its syntax tree without importing it. They fail on a syntax error, on a missing function or a missing `main()` call, on a change to the four section headings, on a query whose schema, table or columns the dbt models do not define, and on page text that holds an emoji, the word "real-time" or a percentage typed into a string.
+- 4 render checks run the whole page with Streamlit's `AppTest`, with `psycopg2.connect` and `pandas.read_sql` replaced so that the queries return stand-in tables: with data, without anomalies, with empty tables and without a connection file. They need the packages in `requirements-stable.txt` and are skipped when those are not installed. To run them, install `requirements-dev.txt` into the virtualenv from [step 3](#3-run-dbt).
+
+`.github/workflows/ci.yml` runs on every push and pull request with Python 3.12. It runs the pytest suite, installs dbt-core 1.8.7 and dbt-redshift 1.8.1, runs `dbt deps`, and runs `dbt parse` with a copy of `dbt/profiles.yml.example` and placeholder values. `dbt parse` fails on broken Jinja, on a `ref()` or `source()` that does not resolve and on missing packages. It does not check the SQL and does not connect to a warehouse, so the models are never executed and the 44 dbt tests never run in CI. The 4 render checks for the dashboard are skipped there as well, because the workflow does not install the dashboard's dependencies.
 
 ## Sample data
 
