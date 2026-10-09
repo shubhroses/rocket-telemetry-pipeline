@@ -1,3 +1,4 @@
-# Test dependencies. The generator and the cleaner themselves need only the
-# standard library; requirements-stable.txt covers dbt and the dashboard.
+# Test and lint dependencies. The generator and the cleaner themselves need only
+# the standard library; requirements-stable.txt covers dbt and the dashboard.
 pytest==9.1.1
+ruff==0.16.10

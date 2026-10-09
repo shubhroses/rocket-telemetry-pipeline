@@ -1,0 +1,10 @@
+# Lint and format settings for the Python files in python/ and tests/.
+line-length = 120
+target-version = "py310"
+# The tests import the scripts in python/ as top-level modules (see pytest.ini),
+# so import sorting has to treat them as first-party.
+src = ["python"]
+
+[lint]
+# pycodestyle errors and warnings, pyflakes, import order.
+select = ["E", "W", "F", "I"]

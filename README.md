@@ -39,7 +39,7 @@ python/streamlit_dashboard.py    reads the fact table and both marts
 | `requirements-stable.txt` | Pinned dbt, Streamlit, pandas, Plotly and psycopg2 versions |
 | `tests/test_pipeline.py` | pytest suite for the generator and the cleaner |
 | `tests/test_dashboard.py` | pytest checks for the dashboard: static ones that run everywhere, and render ones that need the dashboard's dependencies |
-| `requirements-dev.txt`, `pytest.ini` | Test dependency (pytest) and test configuration |
+| `requirements-dev.txt`, `pytest.ini`, `ruff.toml` | Test and lint dependencies (pytest, ruff) and their configuration |
 | `.github/workflows/ci.yml` | GitHub Actions workflow: pytest, then `dbt deps` and `dbt parse` |
 
 ## What each stage does
